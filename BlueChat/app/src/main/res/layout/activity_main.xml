@@ -15,5 +15,10 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:choiceMode="singleChoice"
-        android:background="#ffffffff" />
+        android:background="#ffffffff"
+        android:footerDividersEnabled="true"
+        android:headerDividersEnabled="true"
+        android:smoothScrollbar="true"
+        android:visibility="visible"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>

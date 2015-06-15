@@ -3,37 +3,172 @@ package apps.play.self.bluechat;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.UUID;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity{
     private BluetoothAdapter mBluetooth;
     private ArrayAdapter<String> mArrayAdapter;
     private ArrayList<String> array;
+    private ArrayList<BluetoothDevice> devices;
+    private BluetoothSocket socket;
     int REQUEST_ENABLE_BT = 123;
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                mArrayAdapter.add(device.getName() + "--> " + device.getAddress());
+                if(device.getName() != null)mArrayAdapter.add(device.getName() + "--> " + device.getAddress());
+                devices.add(device);
             }
             else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 if(array.size() == 0) mArrayAdapter.add("NO DEVICES FOUND!");
             }
         }
     };
+    Handler connectionHandler = new Handler(){
+        public void handleMessage(Message m){
+        }
+    };
+    private class BTServer extends Thread {
+        private BluetoothServerSocket mmServerSocket;
+
+        public BTServer() {
+            BluetoothServerSocket tmp = null;
+            try {
+                tmp = mBluetooth.listenUsingRfcommWithServiceRecord("BlueChat", UUID.fromString("e50d0cd0-134f-11e5-b939-0800200c9a66"));
+            } catch (IOException e) { }
+            mmServerSocket = tmp;
+        }
+
+        public void run(){
+            while (true) {
+                try {
+                    socket = mmServerSocket.accept();
+                if (socket != null) {
+                    connectionHandler.sendMessage(new Message());
+                    mmServerSocket.close();
+                    break;
+                }
+                } catch (IOException e) {
+                    break;
+                }
+            }
+            return;
+        }
+
+        public void cancel(){
+            try{
+                mmServerSocket.close();
+            } catch (IOException e) {
+            }
+        }
+    }
+    private class BTClient extends Thread {
+        public BTClient(BluetoothDevice newDevice){
+            BluetoothSocket tmp = null;
+            try {
+                tmp = newDevice.createRfcommSocketToServiceRecord(UUID.fromString("e50d0cd0-134f-11e5-b939-0800200c9a66"));
+            } catch (IOException e) { }
+            socket = tmp;
+        }
+
+        public void run() {
+            mBluetooth.cancelDiscovery();
+
+            try {
+                socket.connect();
+            } catch (IOException connectException) {
+                try {
+                    socket.close();
+                } catch (IOException closeException) { }
+                return;
+            }
+            connectionHandler.sendMessage(new Message());
+            return;
+        }
+
+        public void cancel() {
+            try {
+                socket.close();
+            } catch (IOException e) { }
+        }
+
+    }
+
+    private class BTConnection extends Thread {
+        private final InputStream mmInStream;
+        private final OutputStream mmOutStream;
+
+        public BTConnection() {
+            InputStream tmpIn = null;
+            OutputStream tmpOut = null;
+            try {
+                tmpIn = socket.getInputStream();
+                tmpOut = socket.getOutputStream();
+            } catch (IOException e) { }
+
+            mmInStream = tmpIn;
+            mmOutStream = tmpOut;
+        }
+
+        public void run() {
+            byte[] buffer = new byte[1024];
+            int bytes;
+
+            while (true) {
+                try {
+                    bytes = mmInStream.read(buffer);
+                    connectionHandler.obtainMessage(1, bytes, -1, buffer).sendToTarget();
+                } catch (IOException e) {
+                    break;
+                }
+            }
+        }
+
+        public void write(byte[] bytes) {
+            try {
+                mmOutStream.write(bytes);
+            } catch (IOException e) { }
+        }
+
+        public void cancel() {
+            try {
+                socket.close();
+            } catch (IOException e) { }
+        }
+    }
+    private AdapterView.OnItemClickListener mMessageClickedHandler = new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView parent, View v, int position, long id) {
+            myClient = new BTClient(devices.get(position));
+            myClient.start();
+        }
+    };
+    private BTServer myServer;
+    private BTClient myClient;
+    private BTConnection myConnection;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,11 +179,13 @@ public class MainActivity extends Activity {
         registerReceiver(btReceiver, filter);
 
         array = new ArrayList<String>();
+        devices = new ArrayList<BluetoothDevice>();
 
         mArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, array);
 
         ListView lView = (ListView) findViewById(R.id.listView);
         lView.setAdapter(mArrayAdapter);
+        lView.setOnItemClickListener(mMessageClickedHandler);
 
         mBluetooth = BluetoothAdapter.getDefaultAdapter();
         if(mBluetooth == null) System.exit(1);
@@ -56,6 +193,9 @@ public class MainActivity extends Activity {
         Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
         startActivity(discoverableIntent);
+
+        myServer = new BTServer();
+        myServer.start();
 
         mBluetooth.startDiscovery();
     }
