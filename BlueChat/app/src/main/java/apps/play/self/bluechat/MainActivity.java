@@ -1,5 +1,6 @@
 package apps.play.self.bluechat;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -10,23 +11,44 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import java.util.ArrayList;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
     private BluetoothAdapter mBluetooth;
+    private ArrayAdapter<String> mArrayAdapter;
+    private ArrayList<String> array;
     int REQUEST_ENABLE_BT = 123;
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                //mArrayAdapter.add(device.getName() + "--> " + device.getAddress());
+                mArrayAdapter.add(device.getName() + "--> " + device.getAddress());
+            }
+            else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                if(array.size() == 0) mArrayAdapter.add("NO DEVICES FOUND!");
             }
         }
     };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(btReceiver, filter);
+
+        array = new ArrayList<String>();
+
+        mArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, array);
+
+        ListView lView = (ListView) findViewById(R.id.listView);
+        lView.setAdapter(mArrayAdapter);
 
         mBluetooth = BluetoothAdapter.getDefaultAdapter();
         if(mBluetooth == null) System.exit(1);
@@ -35,37 +57,12 @@ public class MainActivity extends ActionBarActivity {
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
         startActivity(discoverableIntent);
 
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(btReceiver, filter);
-
         mBluetooth.startDiscovery();
-        setContentView(R.layout.activity_main);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
     public void onDestroy(){
+        super.onDestroy();
         unregisterReceiver(btReceiver);
     }
 }
