@@ -1,5 +1,11 @@
 package apps.play.self.bluechat;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -7,10 +13,32 @@ import android.view.MenuItem;
 
 
 public class MainActivity extends ActionBarActivity {
-
+    private BluetoothAdapter mBluetooth;
+    int REQUEST_ENABLE_BT = 123;
+    private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                //mArrayAdapter.add(device.getName() + "--> " + device.getAddress());
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mBluetooth = BluetoothAdapter.getDefaultAdapter();
+        if(mBluetooth == null) System.exit(1);
+
+        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
+        startActivity(discoverableIntent);
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(btReceiver, filter);
+
+        mBluetooth.startDiscovery();
         setContentView(R.layout.activity_main);
     }
 
@@ -34,5 +62,10 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onDestroy(){
+        unregisterReceiver(btReceiver);
     }
 }
