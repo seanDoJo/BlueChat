@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 
-public class MainActivity extends Activity{
+public class MainActivity extends FragmentActivity implements ItemFragment.OnFragmentInteractionListener {
     private BluetoothAdapter mBluetooth;
     private ArrayAdapter<String> mArrayAdapter;
     private ArrayList<String> array;
@@ -40,16 +41,26 @@ public class MainActivity extends Activity{
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                if(device.getName() != null)mArrayAdapter.add(device.getName() + "--> " + device.getAddress());
+                ItemFragment itemFrag = (ItemFragment) getSupportFragmentManager().findFragmentById(R.id.item_fragment);
+                itemFrag.setText(device.getName() + "--> " + device.getAddress());
                 devices.add(device);
             }
             else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                if(array.size() == 0) mArrayAdapter.add("NO DEVICES FOUND!");
+                if(devices.size() == 0) {
+                    ItemFragment itemFrag = (ItemFragment) getSupportFragmentManager().findFragmentById(R.id.item_fragment);
+                    itemFrag.setText("NO DEVICES FOUND!");
+                }
             }
         }
     };
     Handler connectionHandler = new Handler(){
         public void handleMessage(Message m){
+            if(m.what == 1){
+                //append data
+            }
+            else {
+                //exchange fragments
+            }
         }
     };
     private class BTServer extends Thread {
@@ -68,7 +79,7 @@ public class MainActivity extends Activity{
                 try {
                     socket = mmServerSocket.accept();
                 if (socket != null) {
-                    connectionHandler.sendMessage(new Message());
+                    connectionHandler.obtainMessage(2, 0, -1, null).sendToTarget();
                     mmServerSocket.close();
                     break;
                 }
@@ -106,7 +117,7 @@ public class MainActivity extends Activity{
                 } catch (IOException closeException) { }
                 return;
             }
-            connectionHandler.sendMessage(new Message());
+            connectionHandler.obtainMessage(2, 0, -1, null).sendToTarget();
             return;
         }
 
@@ -160,12 +171,6 @@ public class MainActivity extends Activity{
             } catch (IOException e) { }
         }
     }
-    private AdapterView.OnItemClickListener mMessageClickedHandler = new AdapterView.OnItemClickListener() {
-        public void onItemClick(AdapterView parent, View v, int position, long id) {
-            myClient = new BTClient(devices.get(position));
-            myClient.start();
-        }
-    };
     private BTServer myServer;
     private BTClient myClient;
     private BTConnection myConnection;
@@ -180,12 +185,6 @@ public class MainActivity extends Activity{
 
         array = new ArrayList<String>();
         devices = new ArrayList<BluetoothDevice>();
-
-        mArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, array);
-
-        ListView lView = (ListView) findViewById(R.id.listView);
-        lView.setAdapter(mArrayAdapter);
-        lView.setOnItemClickListener(mMessageClickedHandler);
 
         mBluetooth = BluetoothAdapter.getDefaultAdapter();
         if(mBluetooth == null) System.exit(1);
@@ -204,5 +203,10 @@ public class MainActivity extends Activity{
     public void onDestroy(){
         super.onDestroy();
         unregisterReceiver(btReceiver);
+    }
+
+    public void onFragmentInteraction(int index){
+        myClient = new BTClient(devices.get(index));
+        myClient.start();
     }
 }
