@@ -160,6 +160,7 @@ public class MainActivity extends FragmentActivity implements ItemFragment.OnFra
                 try {
                     bytes = mmInStream.read(buffer);
                     connectionHandler.obtainMessage(1, bytes, -1, buffer).sendToTarget();
+                    buffer = new byte[buffer.length];
                 } catch (IOException e) {
                     break;
                 }
