@@ -6,10 +6,12 @@
     <TextView
         android:id="@+id/newText"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:padding="3dip"
         android:layout_alignParentRight="true"
-        android:background="#ff56cbff">
+        android:background="@drawable/gradient_box"
+        android:textColor="#fff8ffff"
+        android:gravity="right">
 
     </TextView>
 

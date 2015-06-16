@@ -9,7 +9,10 @@
         android:layout_height="match_parent"
         android:padding="3dip"
         android:layout_alignParentLeft="true"
-        android:background="#ffff1611">
+        android:background="@drawable/incoming_box"
+        android:textColor="#ff000000"
+        android:enabled="false"
+        android:focusable="false">
 
     </TextView>
 
