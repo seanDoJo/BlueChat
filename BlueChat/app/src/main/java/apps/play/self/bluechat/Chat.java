@@ -23,8 +23,9 @@ public class Chat extends Fragment {
 
     private AbsListView mListView;
     onSendListener mListener;
-    private ArrayAdapter mAdapter;
+    private CustomAdapter mAdapter;
     private ArrayList<String> myArray;
+    private ArrayList<Integer> userTrack;
 
     public Chat(){
         // This just needs to be here
@@ -34,7 +35,8 @@ public class Chat extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         myArray = new ArrayList<String>();
-        mAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, myArray);
+        userTrack = new ArrayList<Integer>();
+        mAdapter = new CustomAdapter(getActivity(), myArray, userTrack);
     }
 
     @Override
@@ -48,7 +50,9 @@ public class Chat extends Fragment {
             public void onClick(View v) {
                 EditText editText = (EditText) getView().findViewById(R.id.edit_message);
                 String message = editText.getText().toString();
-                mAdapter.add(message);
+                myArray.add(message);
+                userTrack.add(2);
+                mAdapter.notifyDataSetChanged();
                 mListener.onSendListener(message);
                 editText.setText("");
                 InputMethodManager mgr = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -74,7 +78,9 @@ public class Chat extends Fragment {
     }
 
     public void addMessage(String newMessage){
-        mAdapter.add(newMessage);
+        myArray.add(newMessage);
+        userTrack.add(1);
+        mAdapter.notifyDataSetChanged();
     }
 
     public interface onSendListener{

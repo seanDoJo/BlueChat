@@ -12,7 +12,8 @@
         android:id="@+id/listView2"
         android:layout_weight="1"
         android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"/>
+        android:transcriptMode="alwaysScroll"
+        android:listSelector="@drawable/selector"/>
 
     <TableRow>
         <EditText android:id="@+id/edit_message"

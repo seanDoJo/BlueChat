@@ -42,7 +42,7 @@ public class MainActivity extends FragmentActivity implements ItemFragment.OnFra
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 ItemFragment itemFrag = (ItemFragment) getSupportFragmentManager().findFragmentById(R.id.item_fragment);
-                itemFrag.setText(device.getName() + "--> " + device.getAddress());
+                if(device.getName() != null)itemFrag.setText(device.getName() + "--> " + device.getAddress());
                 devices.add(device);
             }
             else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
