@@ -10,6 +10,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 
@@ -61,7 +62,6 @@ public class ItemFragment extends Fragment{
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(mMessageClickedHandler);
-
 
 
         return view;
