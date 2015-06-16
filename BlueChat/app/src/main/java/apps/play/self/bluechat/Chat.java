@@ -7,12 +7,22 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListAdapter;
+
+import java.util.ArrayList;
 
 
 public class Chat extends Fragment {
 
+    private AbsListView mListView;
     onSendListener mListener;
+    private ArrayAdapter mAdapter;
+    private ArrayList<String> myArray;
 
     public Chat(){
         // This just needs to be here
@@ -21,11 +31,26 @@ public class Chat extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        myArray = new ArrayList<String>();
+        mAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, myArray);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat, container, false);
+        View view = inflater.inflate(R.layout.fragment_chat, container, false);
+        mListView = (AbsListView) view.findViewById(R.id.listView2);
+        ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
+        Button button = (Button) view.findViewById(R.id.button_send);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText editText = (EditText) getView().findViewById(R.id.edit_message);
+                String message = editText.getText().toString();
+                mAdapter.add(message);
+                mListener.onSendListener(message);
+            }
+        });
+        return view;
     }
 
     @Override
@@ -43,10 +68,8 @@ public class Chat extends Fragment {
         super.onDetach();
     }
 
-    public void onClickSend(View view){
-        EditText editText = (EditText) getView().findViewById(R.id.edit_message);
-        String message = editText.getText().toString();
-        mListener.onSendListener(message);
+    public void addMessage(String newMessage){
+        mAdapter.add(newMessage);
     }
 
     public interface onSendListener{

@@ -62,6 +62,8 @@ public class ItemFragment extends Fragment{
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(mMessageClickedHandler);
 
+
+
         return view;
     }
 

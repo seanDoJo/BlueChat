@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 
-public class MainActivity extends FragmentActivity implements ItemFragment.OnFragmentInteractionListener {
+public class MainActivity extends FragmentActivity implements ItemFragment.OnFragmentInteractionListener, Chat.onSendListener {
     private BluetoothAdapter mBluetooth;
     private ArrayAdapter<String> mArrayAdapter;
     private ArrayList<String> array;
@@ -51,15 +51,18 @@ public class MainActivity extends FragmentActivity implements ItemFragment.OnFra
                     itemFrag.setText("NO DEVICES FOUND!");
                 }
             }
+            else if(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED.equals(action)){
+                ItemFragment itemFrag = (ItemFragment) getSupportFragmentManager().findFragmentById(R.id.item_fragment);
+                itemFrag.setText("Connected!");
+            }
         }
     };
     Handler connectionHandler = new Handler(){
         public void handleMessage(Message m){
             if(m.what == 1){
-                //append data
-            }
-            else {
-                //exchange fragments
+                Chat chatFrag = (Chat) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
+                byte[] data = (byte[])m.obj;
+                chatFrag.addMessage(new String(data));
             }
         }
     };
@@ -78,8 +81,10 @@ public class MainActivity extends FragmentActivity implements ItemFragment.OnFra
             while (true) {
                 try {
                     socket = mmServerSocket.accept();
+                    myConnection = new BTConnection();
+                    myConnection.start();
                 if (socket != null) {
-                    connectionHandler.obtainMessage(2, 0, -1, null).sendToTarget();
+                    //connectionHandler.obtainMessage(2, 0, -1, null).sendToTarget();
                     mmServerSocket.close();
                     break;
                 }
@@ -111,13 +116,15 @@ public class MainActivity extends FragmentActivity implements ItemFragment.OnFra
 
             try {
                 socket.connect();
+                myConnection = new BTConnection();
+                myConnection.start();
             } catch (IOException connectException) {
                 try {
                     socket.close();
                 } catch (IOException closeException) { }
                 return;
             }
-            connectionHandler.obtainMessage(2, 0, -1, null).sendToTarget();
+            //connectionHandler.obtainMessage(2, 0, -1, null).sendToTarget();
             return;
         }
 
@@ -208,5 +215,11 @@ public class MainActivity extends FragmentActivity implements ItemFragment.OnFra
     public void onFragmentInteraction(int index){
         myClient = new BTClient(devices.get(index));
         myClient.start();
+    }
+
+    public void onSendListener(String message){
+        if(myConnection != null) {
+            myConnection.write(message.getBytes());
+        }
     }
 }
