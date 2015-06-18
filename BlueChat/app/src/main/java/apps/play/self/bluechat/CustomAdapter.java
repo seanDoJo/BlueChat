@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,15 +33,17 @@ public class CustomAdapter extends ArrayAdapter<String> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        int user = userTrack.get(position);
+        Log.i("position", "position: " + position);
+        Log.i("userTrack", "userTrack: " + userTrack);
+        //int user = userTrack.get(position);
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View rowView = null;
-        if(user == 1){
+        //if(user == 1){
             rowView = inflater.inflate(R.layout.row_layout_incoming, parent, false);
-        }
-        else if(user == 2){
+        //}
+        /*else if(user == 2){
             rowView = inflater.inflate(R.layout.row_layout_outgoing, parent, false);
-        }
+        }*/
         TextView title = (TextView) rowView.findViewById(R.id.newText);
         title.setText(messages.get(position));
         return rowView;

@@ -3,6 +3,9 @@ package apps.play.self.bluechat;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -14,8 +17,10 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -217,8 +222,12 @@ public class MainActivity extends FragmentActivity implements ItemFragment.OnFra
     }
 
     public void onFragmentInteraction(int index){
+        myServer.cancel();
         myClient = new BTClient(devices.get(index));
         myClient.start();
+        Log.i("print", "Position:" + index);
+        Chat myChat = (Chat) getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
+        myChat.attachArray(index);
     }
 
     public void onSendListener(String message){
